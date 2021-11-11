@@ -46,25 +46,25 @@ def admin():
 def client():
     return render_template("client/index.html")
 
-def gen(camera):
-    """Video streaming generator function."""
-    while True:
-        frame = camera.get_frame()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+# def gen(camera):
+#     """Video streaming generator function."""
+#     while True:
+#         frame = camera.get_frame()
+#         yield (b'--frame\r\n'
+#                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-@app.route('/video_start')
-def video_feed():
+# @app.route('/video_start')
+# def video_feed():
 
-    # import camera driver
-    if os.environ.get('CAMERA'):
-        Camera = import_module('camera_' + os.environ['CAMERA']).Camera
-    else:
-        from camera import Camera
+#     # import camera driver
+#     if os.environ.get('CAMERA'):
+#         Camera = import_module('camera_' + os.environ['CAMERA']).Camera
+#     else:
+#         from camera import Camera
 
-    """Video streaming route. Put this in the src attribute of an img tag."""
-    return Response(gen(Camera()),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+#     """Video streaming route. Put this in the src attribute of an img tag."""
+#     return Response(gen(Camera()),
+#                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.errorhandler(404)
 def notFound(e):

@@ -1,0 +1,6 @@
+# python 3.6
+pip install Flask
+pip install opencv-python
+pip install pymongo
+pip install python-dotenv
+pip install colorama
