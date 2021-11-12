@@ -1,116 +1,73 @@
+from app import video_feed
 from base_camera import BaseCamera
 
 import os
 import sys
 from pathlib import Path
-
 import cv2
 import numpy as np
-import torch
-import torch.backends.cudnn as cudnn
 
-FILE = Path(__file__).resolve()
-ROOT = FILE.parents[0]  # YOLOv5 root directory
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))  # add ROOT to PATH
-ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
-from models.experimental import attempt_load
-from utils.datasets import IMG_FORMATS, VID_FORMATS, LoadStreams
-from utils.general import (apply_classifier, check_file, non_max_suppression, scale_coords)
-from utils.plots import Annotator, colors
-from utils.torch_utils import load_classifier, select_device, time_sync
-from utils.utils import *
+recognizer = cv2.face.LBPHFaceRecognizer_create()
+recognizer.read('trainer/trainer.yml')  # load trained model
+cascadePath = "haarcascade_frontalface_default.xml"
+faceCascade = cv2.CascadeClassifier(cascadePath)
+
+font = cv2.FONT_HERSHEY_SIMPLEX
+
+# iniciate id counter, the number of persons you want to include
+id = 4  # two persons (e.g. Jacob, Jack)
+
+# key in names, start from the second place, leave first empty
+names = ['', 'Kenneth', 'Nitol', 'Liza', 'Bipul']
+video_source = 1
 
 class Camera(BaseCamera):
-    video_source = 0
 
-    def __init__(self):
-        if os.environ.get('OPENCV_CAMERA_SOURCE'):
-            Camera.set_video_source(int(os.environ['OPENCV_CAMERA_SOURCE']))
-        super(Camera, self).__init__()
-
-    @staticmethod
-    def set_video_source(source):
-        Camera.video_source = source
 
     @staticmethod
     def frames():
-        device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
-        augment=False,  # augmented inference
-        visualize=False,  # visualize features
 
-        source = str(0)
-        is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
-        is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
-        if is_url and is_file:
-            source = check_file(source)  # download
+        cam = cv2.VideoCapture(1)
+        cam.set(3, 640)  # set video widht
+        cam.set(4, 480)  # set video height
 
-        # Initialize
-        device = select_device(0)
-        half = True  # half precision only supported on CUDA
-        classify = False
+        # Define min window size to be recognized as a face
+        minW = 0.1 * cam.get(3)
+        minH = 0.1 * cam.get(4)
 
-        names =  [f'class{i}' for i in range(1000)]  # assign defaults
+        while True:
 
-        model = attempt_load('best.pt', map_location=device)
-        names = model.module.names if hasattr(model, 'module') else model.names  # get class names
-        if half:
-            model.half()  # to FP16
-        if classify:  # second-stage classifier
-            modelc = load_classifier(name='resnet50', n=2)  # initialize
-            modelc.load_state_dict(torch.load('resnet50.pt', map_location=device)['model']).to(device).eval()
+            ret,img = cam.read()
 
-        cudnn.benchmark = True  # set True to speed up constant image size inference
-        dataset = LoadStreams(source, img_size=640)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        # Run inference
+            faces = faceCascade.detectMultiScale(
+                gray,
+                scaleFactor=1.2,
+                minNeighbors=5,
+                minSize=(int(minW), int(minH)),
+            )
 
-        dt, seen = [0.0, 0.0, 0.0], 0
-        for path, img, im0s, s in dataset:
-            t1 = time_sync()
-            img = torch.from_numpy(img).to(device)
-            img = img.half() if half else img.float()  # uint8 to fp16/32
-            img /= 255  # 0 - 255 to 0.0 - 1.0
-            if len(img.shape) == 3:
-                img = img[None]  # expand for batch dim
-            t2 = time_sync()
-            dt[0] += t2 - t1
+            for (x, y, w, h) in faces:
 
-            pred = model(img, augment=augment, visualize=visualize)[0]
+                cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+                id, confidence = recognizer.predict(gray[y:y + h, x:x + w])
+
+                # Check if confidence is less them 100 ==> "0" is perfect match
+                if (confidence < 100):
+                    id = names[id]
+                    confidence = "  {0}%".format(round(100 - confidence))
+                else:
+                    id = "unknown"
+                    confidence = "  {0}%".format(round(100 - confidence))
+
+                cv2.putText(img, str(id), (x + 5, y - 5), font, 1, (255, 255, 255), 2)
+                cv2.putText(img, str(confidence), (x + 5, y + h - 5),
+                            font, 1, (255, 255, 0), 1)
             
-            t3 = time_sync()
-            dt[1] += t3 - t2
+            # encode as a jpeg image and return it
+            yield cv2.imencode('.jpg', img)[1].tobytes()
 
-            # NMS
-            pred = non_max_suppression(pred, 0.4, 0.5, classes=None, agnostic=False)
-            dt[2] += time_sync() - t3
-
-            # Second-stage classifier (optional)
-            if classify:
-                pred = apply_classifier(pred, modelc, img, im0s)
-
-            # Process predictions
-            for i, det in enumerate(pred):  # detections per image
-                p, s, im0 = path[i], '%g: ' % i, im0s[i].copy()
-
-                s += '%gx%g ' % img.shape[2:]  # print string
-
-                # normalization gain whwh
-                gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
-                if det is not None and len(det):
-                    # Rescale boxes from img_size to im0 size
-                    det[:, :4] = scale_coords(
-                        img.shape[2:], det[:, :4], im0.shape).round()
-
-                    for c in det[:, -1].detach().unique():
-                        n = (det[:, -1] == c).sum()  # detections per class
-                        s += '%g %s, ' % (n, names[int(c)])  # add to string
-
-                    for *xyxy, conf, cls in det:
-                        label = '%s %.2f' % (names[int(cls)], conf)
-                        plot_one_box(xyxy, im0, label=label, line_thickness=3)
-                        
-                print('%sDone. (%.3fs)' % (s, t2 - t1))
-
-            yield cv2.imencode('.jpg', im0)[1].tobytes()
+        
