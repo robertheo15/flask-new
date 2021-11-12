@@ -19,7 +19,7 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 id = 4  # two persons (e.g. Jacob, Jack)
 
 # key in names, start from the second place, leave first empty
-names = ['', 'Kenneth', 'Nitol', 'Liza', 'Bipul']
+names = ['', 'Kenneth', 'Robert', 'Liza', 'Bipul']
 video_source = 1
 
 class Camera(BaseCamera):
@@ -28,7 +28,7 @@ class Camera(BaseCamera):
     @staticmethod
     def frames():
 
-        cam = cv2.VideoCapture(1)
+        cam = cv2.VideoCapture(0)
         cam.set(3, 640)  # set video widht
         cam.set(4, 480)  # set video height
 
