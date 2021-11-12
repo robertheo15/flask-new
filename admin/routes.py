@@ -3,7 +3,7 @@ from app import app
 from admin.models import Admin
 
 @app.route("/admin/user/")
-def user():
+def adminUser():
     users = Admin().getAdmin()
     return render_template('admin/user.html', myUsers=users)
 

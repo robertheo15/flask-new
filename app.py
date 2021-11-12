@@ -30,21 +30,34 @@ from admin import routes
 def home():
     return render_template('user/index.html')
 
-@app.route("/login/")
-def login():
+@app.route("/loginadmin/")
+def loginAdmin():
     return render_template('admin/login.html')
+
+@app.route("/admin/")
+def admin():
+    return render_template("admin/index.html")
+
+@app.route("/loginclient/")
+def loginClient():
+    return render_template('client/login.html')
+
+@app.route("/loginuser/")
+def loginUser():
+    return render_template('user/login.html')
 
 @app.route("/forgot-password/")
 def forgetPassword():
     return render_template('admin/forgot-password.html')    
 
-@app.route("/admin/")
-def admin():
-    return render_template("admin/index.html")
     
 @app.route("/client/")
 def client():
     return render_template("client/index.html")
+
+@app.route("/user/")
+def user():
+    return render_template("user/index.html")
 
 def gen(camera):
     """Video streaming generator function."""
