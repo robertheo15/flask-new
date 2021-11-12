@@ -1,0 +1,32 @@
+{% extends "admin/templates/app.html" %}
+{% block content %}
+
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+        <h4 class="m-0 font-weight-bold text-primary">TAMBAH USER</h4>  
+    </div>
+
+        <div class="row">
+            <div class="card-body">
+             <form name="addAdmin">
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="text" class="form-control" id="email" name="email"/>
+              </div>
+                <div class="form-group">
+                  <label for="name">Nama</label>
+                  <input type="text" class="form-control" id="name" name="name"/>
+                </div>
+                <div class="form-group">
+                  <label for="jabatan">Jabatan</label>
+                  <input type="text" class="form-control" id="jabatan" name="jabatan">
+                </div>
+                <button type="submit" class="btn btn-success">Tambah</button>
+              </form>
+            </div>  
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -5,9 +5,8 @@
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
         <h4 class="m-0 font-weight-bold text-primary">DAFTAR USER</h4>
-        <a class="btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#addGame"><i class="fas fa-user fa-sm text-white-50 mr-2"></i>Add User</a>
+        <a class="btn btn-sm btn-primary shadow-sm"  href="{{ url_for('userCreate') }}"><i class="fas fa-user fa-sm text-white-50 mr-2"></i>Add User</a>
     </div>
-
         <!-- Content Row -->
         <div class="row">
             <div class="card-body">
@@ -24,20 +23,19 @@
                             </tr>
                         </thead>
                         <tbody>
-                                <tr>
-                                    <td>A001</td>
-                                    <td>Kenneth Liem Hardadi</td>
-                                    <td>Mahasiswa</td>
-                                    <td>P2</td>
-                                    <td>Monday,26 Juni 2021 14.00</td>
-                                    <td>
-                                        <form action="" method="POST" class="d-inline">
-                                            <input type="hidden" name="_method" value="DELETE">
-                                            <button type="submit" class="btn btn-danger mb-1" onclick="return confirm('apakah anda yakin?');"><i class="fas fa-trash-alt"></i></button>
-                                        </form>
-                                        <a id="" class="btn btn-primary mb-1"><i class="fas fa-pen"></i></a>                                  
-                                    </td>
-                                </tr>
+                            {% for user in myUsers %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ user['name'] }}</td>
+                                <td>{{ user['jabatan'] }}</td>
+                                <td>P2(belum)</td>
+                                <td>Monday,26 Juni 2021 14.00(belum)</td>
+                                <td>
+                                    <a href="/admin/delete-admin/{{ user['_id'] }}" class="btn btn-danger mb-1" onclick="return confirm('apakah anda yakin?');"><i class="fas fa-trash-alt"></i></a>
+                                    <a id="" class="btn btn-primary mb-1"><i class="fas fa-pen"></i></a>                                  
+                                </td>
+                            </tr>
+                            {% endfor %}          
                         </tbody>
                     </table>
                 </div>
